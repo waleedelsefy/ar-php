@@ -17,7 +17,7 @@
 ## 📦 Installation | التثبيت
 
 ```bash
-composer require waleedelsefy/ar-php-core
+composer require waleedelsefy/ar-php
 ```
 
 ### Requirements | المتطلبات
