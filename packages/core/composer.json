@@ -1,21 +1,22 @@
 {
-    "name": "waleedelsefy/ar-php",
+    "name": "waleedelsefy/ar-php-core",
     "description": "Core foundation for ArPHP Enhanced - modular Arabic text processing",
     "type": "library",
     "license": "MIT",
-    "keywords": ["arabic", "core", "modular"],
+    "keywords": ["arabic", "core", "modular", "php84", "hijri", "islamic", "nlp"],
     "authors": [
         {
             "name": "Waleed Elsefy"
         }
     ],
     "require": {
-        "php": ">=8.1",
+        "php": ">=8.4",
         "ext-mbstring": "*",
+        "ext-json": "*",
         "psr/container": "^2.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^10.0"
+        "phpunit/phpunit": "^11.0"
     },
     "autoload": {
         "psr-4": {

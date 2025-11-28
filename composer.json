@@ -1,9 +1,9 @@
 {
     "name": "waleedelsefy/ar-php",
-    "description": "Modern modular Arabic text processing library for PHP 8.1+",
+    "description": "Modern modular Arabic text processing library for PHP 8.4+",
     "type": "library",
     "license": "MIT",
-    "keywords": ["arabic", "nlp", "text-processing", "modular", "php8"],
+    "keywords": ["arabic", "nlp", "text-processing", "modular", "php84", "hijri", "islamic"],
     "authors": [
         {
             "name": "Waleed Elsefy",
@@ -16,13 +16,14 @@
         "source": "https://github.com/waleedelsefy/ar-php"
     },
     "require": {
-        "php": ">=8.1",
+        "php": ">=8.4",
         "ext-mbstring": "*",
+        "ext-json": "*",
         "psr/container": "^2.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^10.0",
-        "phpstan/phpstan": "^1.10"
+        "phpunit/phpunit": "^11.0",
+        "phpstan/phpstan": "^2.0"
     },
     "autoload": {
         "psr-4": {
