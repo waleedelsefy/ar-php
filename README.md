@@ -615,13 +615,6 @@ This project is built upon and inspired by the original [ArPHP](https://github.c
 
 ---
 
-## 👨‍💻 Author | المؤلف
-
-**Waleed Elsefy**
-
-- GitHub: [@waleedelsefy](https://github.com/waleedelsefy)
-
----
 
 ## 🌟 Support | الدعم
 
