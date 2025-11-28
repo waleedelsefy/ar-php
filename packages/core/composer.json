@@ -1,12 +1,12 @@
 {
-    "name": "arphp/core",
+    "name": "waleedelsefy/ar-php",
     "description": "Core foundation for ArPHP Enhanced - modular Arabic text processing",
     "type": "library",
     "license": "MIT",
     "keywords": ["arabic", "core", "modular"],
     "authors": [
         {
-            "name": "Waleed Elsefyy"
+            "name": "Waleed Elsefy"
         }
     ],
     "require": {

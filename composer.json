@@ -6,14 +6,14 @@
     "keywords": ["arabic", "nlp", "text-processing", "modular", "php8"],
     "authors": [
         {
-            "name": "Waleed Elsefyy",
+            "name": "Waleed Elsefy",
             "role": "Developer"
         }
     ],
-    "homepage": "https://github.com/waleedelsefy/ar-php-enhanced",
+    "homepage": "https://github.com/waleedelsefy/ar-php",
     "support": {
-        "issues": "https://github.com/waleedelsefy/ar-php-enhanced/issues",
-        "source": "https://github.com/waleedelsefy/ar-php-enhanced"
+        "issues": "https://github.com/waleedelsefy/ar-php/issues",
+        "source": "https://github.com/waleedelsefy/ar-php"
     },
     "require": {
         "php": ">=8.1",
