@@ -18,6 +18,9 @@ use ArPHP\Core\Modules\ArabicSoundex\Exceptions\ArabicSoundexException;
  */
 final class ArabicSoundexService implements ArabicSoundexInterface, ServiceInterface
 {
+    /** @var array<string, array<string, mixed>>|null */
+    private ?array $namesDatabase = null;
+    
     public function __construct(
         private int $codeLength = Config::DEFAULT_CODE_LENGTH,
         private bool $useExtended = false
@@ -106,6 +109,256 @@ final class ArabicSoundexService implements ArabicSoundexInterface, ServiceInter
         $result = \preg_replace('/(.)\1+/', '$1', $result) ?? $result;
 
         return $result;
+    }
+
+    /**
+     * Romanize Arabic text to Latin script
+     * Produces readable pronunciation like "Muhammad" for "محمد"
+     */
+    public function romanize(string $word, bool $simple = true): string
+    {
+        if ($word === '') {
+            return '';
+        }
+
+        // Check for common names first
+        $commonName = $this->getCommonNameRomanization($word);
+        if ($commonName !== null) {
+            return $commonName;
+        }
+
+        // Keep original for diacritics processing
+        $originalWord = $word;
+        
+        // Get diacritics positions before normalization
+        $diacriticsInfo = $this->extractDiacritics($originalWord);
+        
+        // Normalize but don't remove diacritics yet
+        $word = \str_replace(['أ', 'إ', 'آ'], 'ا', $word);
+        $word = \str_replace('ى', 'ي', $word);
+        
+        // Remove diacritics for character processing
+        $cleanWord = \str_replace(Config::DIACRITICS, '', $word);
+        
+        // Remove non-Arabic
+        $cleanWord = \preg_replace('/[^\x{0600}-\x{06FF}]/u', '', $cleanWord) ?? '';
+        
+        if ($cleanWord === '') {
+            return '';
+        }
+
+        $map = $simple ? Config::ROMANIZATION_SIMPLE : Config::ROMANIZATION_MAP;
+        $chars = $this->mbStrSplit($cleanWord);
+        $result = '';
+        $len = \count($chars);
+
+        for ($i = 0; $i < $len; $i++) {
+            $char = $chars[$i];
+            $nextChar = $chars[$i + 1] ?? null;
+            $prevChar = $chars[$i - 1] ?? null;
+            
+            // Get base romanization
+            $roman = $map[$char] ?? $char;
+            
+            // Smart vowel insertion based on position and context
+            $vowelInfo = $this->getVowelInfo($char, $prevChar, $nextChar, $i, $len, $diacriticsInfo, $chars);
+            
+            if ($vowelInfo['needs_vowel']) {
+                $result .= $roman . $vowelInfo['vowel'];
+            } else {
+                $result .= $roman;
+            }
+        }
+
+        // Clean up
+        $result = \preg_replace('/([aeiou])\1+/', '$1', $result) ?? $result; // Remove duplicate vowels
+        $result = \trim($result);
+        
+        // Capitalize first letter
+        return \ucfirst($result);
+    }
+
+    /**
+     * Load names database from JSON file
+     */
+    private function loadNamesDatabase(): void
+    {
+        if ($this->namesDatabase !== null) {
+            return;
+        }
+        
+        $jsonPath = __DIR__ . '/../Data/arabic_names.json';
+        
+        if (\file_exists($jsonPath)) {
+            $content = \file_get_contents($jsonPath);
+            if ($content !== false) {
+                $data = \json_decode($content, true);
+                if (\is_array($data)) {
+                    $this->namesDatabase = $data;
+                    return;
+                }
+            }
+        }
+        
+        // Fallback to empty database
+        $this->namesDatabase = [
+            'male_names' => [],
+            'female_names' => [],
+            'common_words' => []
+        ];
+    }
+
+    /**
+     * Get romanization for common Arabic names from JSON database
+     */
+    private function getCommonNameRomanization(string $word): ?string
+    {
+        // Load database if not loaded
+        $this->loadNamesDatabase();
+        
+        // Normalize the word for lookup
+        $normalized = \str_replace(Config::DIACRITICS, '', $word);
+        $normalized = \str_replace(['أ', 'إ', 'آ'], 'ا', $normalized);
+        $normalized = \str_replace('ة', 'ه', $normalized);
+        
+        // Also try with ة kept as is
+        $normalizedWithTa = \str_replace(Config::DIACRITICS, '', $word);
+        $normalizedWithTa = \str_replace(['أ', 'إ', 'آ'], 'ا', $normalizedWithTa);
+        
+        // Search in all categories
+        $categories = ['male_names', 'female_names', 'common_words'];
+        
+        foreach ($categories as $category) {
+            if (!isset($this->namesDatabase[$category])) {
+                continue;
+            }
+            
+            // Try original word
+            if (isset($this->namesDatabase[$category][$word])) {
+                return $this->namesDatabase[$category][$word]['roman'];
+            }
+            
+            // Try normalized
+            if (isset($this->namesDatabase[$category][$normalized])) {
+                return $this->namesDatabase[$category][$normalized]['roman'];
+            }
+            
+            // Try with ta marbuta
+            if (isset($this->namesDatabase[$category][$normalizedWithTa])) {
+                return $this->namesDatabase[$category][$normalizedWithTa]['roman'];
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get vowel information for a character
+     * 
+     * @return array{needs_vowel: bool, vowel: string}
+     */
+    private function getVowelInfo(string $char, ?string $prevChar, ?string $nextChar, int $pos, int $len, array $diacritics, array $allChars): array
+    {
+        // Don't add vowel after vowel letters (ا و ي ة)
+        if (\in_array($char, ['ا', 'ى', 'ة'], true)) {
+            return ['needs_vowel' => false, 'vowel' => ''];
+        }
+        
+        // و and ي can be vowels or consonants
+        if ($char === 'و') {
+            // If و is at end or followed by consonant, it's a vowel (oo/ou)
+            if ($nextChar === null || !\in_array($nextChar, ['ا', 'و', 'ي', 'ى'], true)) {
+                return ['needs_vowel' => false, 'vowel' => ''];
+            }
+        }
+        
+        if ($char === 'ي') {
+            // If ي is at end, it's usually vowel
+            if ($nextChar === null) {
+                return ['needs_vowel' => false, 'vowel' => ''];
+            }
+        }
+        
+        // If we have explicit diacritic, use it
+        if (isset($diacritics[$pos])) {
+            return ['needs_vowel' => true, 'vowel' => $diacritics[$pos]];
+        }
+        
+        // Last character usually doesn't need vowel
+        if ($pos === $len - 1) {
+            return ['needs_vowel' => false, 'vowel' => ''];
+        }
+        
+        // Check if next is a vowel letter (long vowel)
+        if (\in_array($nextChar, ['ا', 'و', 'ي', 'ى'], true)) {
+            return ['needs_vowel' => false, 'vowel' => ''];
+        }
+        
+        // Determine the vowel based on context
+        $vowel = $this->guessSmartVowel($char, $nextChar, $pos, $len, $allChars);
+        
+        return ['needs_vowel' => true, 'vowel' => $vowel];
+    }
+
+    /**
+     * Smart vowel guessing based on Arabic phonotactics
+     */
+    private function guessSmartVowel(string $char, ?string $nextChar, int $pos, int $len, array $allChars): string
+    {
+        // Emphatic consonants (ص ض ط ظ ق) often take 'a' or 'u'
+        $emphaticChars = ['ص', 'ض', 'ط', 'ظ', 'ق'];
+        if (\in_array($char, $emphaticChars, true)) {
+            return 'a';
+        }
+        
+        // Before double consonant or shadda context, use 'a'
+        if ($nextChar !== null && $nextChar === ($allChars[$pos + 2] ?? null)) {
+            return 'a';
+        }
+        
+        // م before ح often uses 'u' (like in محمد = muhammad)
+        if ($char === 'م' && $nextChar === 'ح') {
+            return 'u';
+        }
+        
+        // ن before ص often uses 'a' (like in منصور)
+        if ($char === 'ن' && $nextChar === 'ص') {
+            return 'a';
+        }
+        
+        // First position often uses 'a' in names
+        if ($pos === 0) {
+            return 'a';
+        }
+        
+        // Default to 'a' (most common)
+        return 'a';
+    }
+
+    /**
+     * Extract diacritics information from word
+     * 
+     * @return array<int, string>
+     */
+    private function extractDiacritics(string $word): array
+    {
+        $diacritics = [];
+        $chars = $this->mbStrSplit($word);
+        $consonantIndex = -1;
+        
+        foreach ($chars as $char) {
+            // Check if it's a diacritic
+            if (\in_array($char, Config::DIACRITICS, true)) {
+                if ($consonantIndex >= 0 && isset(Config::VOWEL_PATTERNS[$char])) {
+                    $diacritics[$consonantIndex] = Config::VOWEL_PATTERNS[$char];
+                }
+            } elseif (\preg_match('/[\x{0600}-\x{06FF}]/u', $char)) {
+                // It's a consonant/letter
+                $consonantIndex++;
+            }
+        }
+        
+        return $diacritics;
     }
 
     public function soundsLike(string $word1, string $word2): bool

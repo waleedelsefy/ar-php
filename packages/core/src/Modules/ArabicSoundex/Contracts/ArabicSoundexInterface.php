@@ -22,6 +22,15 @@ interface ArabicSoundexInterface
     public function metaphone(string $word): string;
 
     /**
+     * Romanize Arabic text to Latin script (pronunciation)
+     * 
+     * @param string $word Arabic word
+     * @param bool $simple Use simple ASCII-only romanization
+     * @return string Romanized pronunciation (e.g., "Muhammad" for "محمد")
+     */
+    public function romanize(string $word, bool $simple = true): string;
+
+    /**
      * Check if two words sound similar
      */
     public function soundsLike(string $word1, string $word2): bool;

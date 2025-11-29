@@ -34,21 +34,24 @@ final class SentimentService implements SentimentInterface
     }
 
     /**
-     * Load sentiment lexicon
+     * Load sentiment lexicon from Config and JSON files
      */
     private function loadLexicon(): void
     {
-        // Load and normalize positive words
+        // Load positive words from Config
         foreach (Config::POSITIVE_WORDS as $word => $weight) {
             $normalized = $this->normalizeWord($word);
             $this->positiveWords[$normalized] = $weight;
         }
 
-        // Load and normalize negative words
+        // Load negative words from Config
         foreach (Config::NEGATIVE_WORDS as $word => $weight) {
             $normalized = $this->normalizeWord($word);
             $this->negativeWords[$normalized] = $weight;
         }
+
+        // Load from JSON files (extended dictionaries)
+        $this->loadFromJsonFiles();
 
         // Load intensifiers
         foreach (Config::INTENSIFIERS as $word => $multiplier) {
@@ -59,6 +62,73 @@ final class SentimentService implements SentimentInterface
         // Load negators
         foreach (Config::NEGATORS as $negator) {
             $this->negators[] = $this->normalizeWord($negator);
+        }
+    }
+
+    /**
+     * Load extended dictionaries from JSON files
+     */
+    private function loadFromJsonFiles(): void
+    {
+        $dataDir = __DIR__ . '/../Data';
+        
+        // Load positive words from JSON
+        $positiveFile = $dataDir . '/positive_words.json';
+        if (\file_exists($positiveFile)) {
+            $content = \file_get_contents($positiveFile);
+            if ($content !== false) {
+                $data = \json_decode($content, true);
+                if (isset($data['words']) && \is_array($data['words'])) {
+                    foreach ($data['words'] as $word => $weight) {
+                        $normalized = $this->normalizeWord((string)$word);
+                        if (!isset($this->positiveWords[$normalized])) {
+                            $this->positiveWords[$normalized] = (float)$weight;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Load negative words from JSON
+        $negativeFile = $dataDir . '/negative_words.json';
+        if (\file_exists($negativeFile)) {
+            $content = \file_get_contents($negativeFile);
+            if ($content !== false) {
+                $data = \json_decode($content, true);
+                if (isset($data['words']) && \is_array($data['words'])) {
+                    foreach ($data['words'] as $word => $weight) {
+                        $normalized = $this->normalizeWord((string)$word);
+                        if (!isset($this->negativeWords[$normalized])) {
+                            $this->negativeWords[$normalized] = (float)$weight;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Load modifiers from JSON
+        $modifiersFile = $dataDir . '/modifiers.json';
+        if (\file_exists($modifiersFile)) {
+            $content = \file_get_contents($modifiersFile);
+            if ($content !== false) {
+                $data = \json_decode($content, true);
+                if (isset($data['intensifiers']) && \is_array($data['intensifiers'])) {
+                    foreach ($data['intensifiers'] as $word => $multiplier) {
+                        $normalized = $this->normalizeWord((string)$word);
+                        if (!isset($this->intensifiers[$normalized])) {
+                            $this->intensifiers[$normalized] = (float)$multiplier;
+                        }
+                    }
+                }
+                if (isset($data['negators']) && \is_array($data['negators'])) {
+                    foreach ($data['negators'] as $negator) {
+                        $normalized = $this->normalizeWord((string)$negator);
+                        if (!\in_array($normalized, $this->negators, true)) {
+                            $this->negators[] = $normalized;
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -283,9 +353,29 @@ final class SentimentService implements SentimentInterface
      */
     private function tokenize(string $text): array
     {
+        // Split on whitespace and punctuation
         $words = \preg_split('/[\s،؛:.!?؟\-\(\)\[\]«»"]+/u', $text, -1, \PREG_SPLIT_NO_EMPTY);
+        
+        if ($words === false) {
+            return [];
+        }
+        
+        // Also try removing common Arabic prefixes (و، ف، ب، ك، ل) to find sentiment words
+        $expanded = [];
+        foreach ($words as $word) {
+            $expanded[] = $word;
+            
+            // If word starts with و or ف or ب and is longer than 2 chars, also add without prefix
+            if (\mb_strlen($word) > 2) {
+                $firstChar = \mb_substr($word, 0, 1);
+                if (\in_array($firstChar, ['و', 'ف', 'ب', 'ك', 'ل'], true)) {
+                    $withoutPrefix = \mb_substr($word, 1);
+                    $expanded[] = $withoutPrefix;
+                }
+            }
+        }
 
-        return $words !== false ? $words : [];
+        return $expanded;
     }
 
     /**

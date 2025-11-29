@@ -99,7 +99,7 @@ final readonly class Config
      * @var array<string, string>
      */
     public const array METAPHONE_MAP = [
-        'ا' => 'A', 'أ' => 'A', 'إ' => 'A', 'آ' => 'AA', 'ء' => '',
+        'ا' => 'A', 'أ' => 'A', 'إ' => 'I', 'آ' => 'AA', 'ء' => '',
         'ب' => 'B',
         'ت' => 'T',
         'ث' => 'TH',
@@ -129,6 +129,98 @@ final readonly class Config
         'ي' => 'Y',
         'ى' => 'A',
         'ة' => 'H',
+    ];
+
+    /**
+     * Romanization mapping for Arabic (Pronunciation)
+     * Based on common Arabic romanization standards (ALA-LC / BGN/PCGN)
+     *
+     * @var array<string, string>
+     */
+    public const array ROMANIZATION_MAP = [
+        'ا' => 'a', 'أ' => 'a', 'إ' => 'i', 'آ' => 'ā', 'ء' => '\'',
+        'ب' => 'b',
+        'ت' => 't',
+        'ث' => 'th',
+        'ج' => 'j',
+        'ح' => 'ḥ',
+        'خ' => 'kh',
+        'د' => 'd',
+        'ذ' => 'dh',
+        'ر' => 'r',
+        'ز' => 'z',
+        'س' => 's',
+        'ش' => 'sh',
+        'ص' => 'ṣ',
+        'ض' => 'ḍ',
+        'ط' => 'ṭ',
+        'ظ' => 'ẓ',
+        'ع' => 'ʿ',
+        'غ' => 'gh',
+        'ف' => 'f',
+        'ق' => 'q',
+        'ك' => 'k',
+        'ل' => 'l',
+        'م' => 'm',
+        'ن' => 'n',
+        'ه' => 'h',
+        'و' => 'w',
+        'ي' => 'y',
+        'ى' => 'ā',
+        'ة' => 'a',
+    ];
+
+    /**
+     * Simple Romanization (ASCII only, more readable)
+     *
+     * @var array<string, string>
+     */
+    public const array ROMANIZATION_SIMPLE = [
+        'ا' => 'a', 'أ' => 'a', 'إ' => 'i', 'آ' => 'aa', 'ء' => '',
+        'ب' => 'b',
+        'ت' => 't',
+        'ث' => 'th',
+        'ج' => 'j',
+        'ح' => 'h',
+        'خ' => 'kh',
+        'د' => 'd',
+        'ذ' => 'dh',
+        'ر' => 'r',
+        'ز' => 'z',
+        'س' => 's',
+        'ش' => 'sh',
+        'ص' => 's',
+        'ض' => 'd',
+        'ط' => 't',
+        'ظ' => 'z',
+        'ع' => 'a',  // عين تُكتب كـ a في بداية الكلمة
+        'غ' => 'gh',
+        'ف' => 'f',
+        'ق' => 'q',
+        'ك' => 'k',
+        'ل' => 'l',
+        'م' => 'm',
+        'ن' => 'n',
+        'ه' => 'h',
+        'و' => 'w',
+        'ي' => 'y',
+        'ى' => 'a',
+        'ة' => 'a',
+    ];
+
+    /**
+     * Vowel patterns for smart romanization
+     * Short vowels (harakat) are usually not written in Arabic
+     *
+     * @var array<string, string>
+     */
+    public const array VOWEL_PATTERNS = [
+        "\u{064E}" => 'a',  // Fatha
+        "\u{064F}" => 'u',  // Damma
+        "\u{0650}" => 'i',  // Kasra
+        "\u{064B}" => 'an', // Fathatan (tanween)
+        "\u{064C}" => 'un', // Dammatan
+        "\u{064D}" => 'in', // Kasratan
     ];
 
     /**

@@ -85,6 +85,24 @@ final class ArabicSoundex
     }
 
     /**
+     * Romanize Arabic text to Latin pronunciation
+     *
+     * Example:
+     *   ArabicSoundex::romanize('محمد') // "Muhammad"
+     *   ArabicSoundex::romanize('أحمد') // "Ahmad"
+     *   ArabicSoundex::romanize('عبدالله') // "Abdullah"
+     *   ArabicSoundex::romanize('فاطمة') // "Fatima"
+     *
+     * @param string $word Arabic word
+     * @param bool $simple Use simple ASCII-only romanization (default: true)
+     * @return string Romanized pronunciation
+     */
+    public static function romanize(string $word, bool $simple = true): string
+    {
+        return self::getInstance()->romanize($word, $simple);
+    }
+
+    /**
      * Check if two words sound similar
      *
      * Example:

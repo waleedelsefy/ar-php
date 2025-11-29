@@ -83,6 +83,18 @@ final class ArabicSoundexModule extends AbstractModule
     }
 
     /**
+     * Romanize Arabic text to Latin pronunciation
+     * Examples:
+     *   - محمد => Muhammad
+     *   - أحمد => Ahmad
+     *   - عبدالله => Abdullah
+     */
+    public function romanize(string $word, bool $simple = true): string
+    {
+        return $this->getService()->romanize($word, $simple);
+    }
+
+    /**
      * Check if two words sound similar
      */
     public function soundsLike(string $word1, string $word2): bool
@@ -176,6 +188,7 @@ final class ArabicSoundexModule extends AbstractModule
         return [
             'soundex',
             'metaphone',
+            'romanize',
             'soundsLike',
             'similarity',
             'findSimilar',
